@@ -1,52 +1,74 @@
 #include <sys/types.h>
 #include <sys/socket.h>
-  #include <netinet/in.h>
-  #include <arpa/inet.h>
-  #include <stdio.h>
-  #include <stdlib.h>
-  #include <string.h>
-  #include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-  int main(int argc, char *argv[])
-  {
-    struct sockaddr_in sa;
-    int res;
-    int SocketFD;
-    int port=atoi(argv[2]);
-    printf ("addr: %s\n",argv[1]);
-    printf ("port: %i\n",port);
-    SocketFD = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (SocketFD == -1) {
-      perror("cannot create socket");
-      exit(EXIT_FAILURE);
-    }
-    
-    memset(&sa, 0, sizeof sa);
-    
-    sa.sin_addr.s_addr=inet_addr("127.0.0.1");
-    sa.sin_family = AF_INET;
-    
-    sa.sin_port = htons(port);
-    //res = inet_aton(AF_INET, "192.168.100.83", &sa.sin_addr);
-   
-    if (connect(SocketFD, (struct sockaddr *)&sa, sizeof sa) == -1) {
-      perror("connect failed");
-      close(SocketFD);
-      exit(EXIT_FAILURE);
-    }
-    else
+int main(int argc, char *argv[])
+{
+    if (argc < 3)
     {
-        printf("Connection accepted \n");
+        fprintf(stderr, "Usage: %s <server_ip> <server_port>\n", argv[0]);
+        exit(EXIT_FAILURE);
     }
-    
-    char buff[256];
-    bzero(buff,256);
-    fgets(buff,255,stdin);
-    int n;
 
-    n = write(SocketFD,buff,strlen(buff));
-    /* perform read write operations ... */
-  
-    close(SocketFD);
+    const char *server_ip = argv[1];
+    int server_port = atoi(argv[2]);
+
+    int socketFD = socket(AF_INET, SOCK_STREAM, 0);
+    if (socketFD == -1)
+    {
+        perror("cannot create socket");
+        exit(EXIT_FAILURE);
+    }
+
+    struct sockaddr_in sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sin_addr.s_addr = inet_addr(server_ip);
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons(server_port);
+
+    if (connect(socketFD, (struct sockaddr *)&sa, sizeof(sa)) == -1)
+    {
+        perror("connect failed");
+        close(socketFD);
+        exit(EXIT_FAILURE);
+    }
+
+    char buffer[256];
+    ssize_t n;
+
+    // Read and print the initial greeting message and socket descriptor
+    n = read(socketFD, buffer, sizeof(buffer) - 1);
+    if (n > 0)
+    {
+        buffer[n] = '\0';
+        printf("%s", buffer);
+    }
+
+    // Infinite loop for reading and sending messages
+    while (1)
+    {
+        n = read(socketFD, buffer, sizeof(buffer) - 1);
+        if (n > 0)
+        {
+            buffer[n] = '\0';
+            printf("%s", buffer);
+
+            // If the message contains the player's own socket descriptor, send a move
+            if (strstr(buffer, "It's your turn"))
+            {
+                char move[256];
+                printf("Enter your move: ");
+                fgets(move, sizeof(move), stdin);
+                write(socketFD, move, strlen(move));
+            }
+        }
+    }
+
+    close(socketFD);
     return EXIT_SUCCESS;
-  }
+}
