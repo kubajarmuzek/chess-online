@@ -23,6 +23,7 @@ int main(int argc, char **argv)
         error("No port provided\n");
     }
 
+    ChessGame chessGame;
     int port = atoi(argv[1]);
     int valread, activity, sd, max_sd;
     struct sockaddr_storage serverStorage;
@@ -108,15 +109,54 @@ int main(int argc, char **argv)
                 if (i == current_turn && connected_clients % 2 == 0)
                 {
                     // Process the move and switch to the other player's turn
-                    current_turn = 1 - current_turn; // Toggle turn (0 to 1, 1 to 0)
-
                     // Send messages to both players
-                    send_to_client(sd, turn_message);
+                    std::string messageWithBoard = chessGame.getBoardState() + "\n" + "Enter your move (startRow startCol destRow destCol): ";
+                    send_to_client(sd, messageWithBoard.c_str());
+
                     int other_player = (i == 0) ? 1 : 0;
-                    send_to_client(client_socket[other_player],wait_message);
+                    send_to_client(client_socket[other_player], wait_message);
                     valread = read(sd, buffer, 1024);
                     buffer[valread] = '\0';
                     printf("%s\n", buffer);
+
+                    int startRow, startCol, destRow, destCol;
+                    if (sscanf(buffer, "%d %d %d %d", &startRow, &startCol, &destRow, &destCol) == 4)
+                    {
+                        char piece = chessGame.getPieceAt(startRow, startCol);
+                        if ((current_turn == 0 && islower(piece)) || (current_turn == 1 && isupper(piece)))
+                        {
+                            if (chessGame.makeMove(startRow, startCol, destRow, destCol))
+                            {
+                                current_turn = 1 - current_turn; // Toggle turn (0 to 1, 1 to 0)
+                                send_to_client(sd, "Move accepted. It's your opponent's turn.\n");
+                                int other_player = (i == 0) ? 1 : 0;
+                                send_to_client(client_socket[other_player], "It's your turn.\n");
+
+                                if (chessGame.isGameOver())
+                                {
+                                    send_to_client(client_socket[0], "Game over.\n");
+                                    send_to_client(client_socket[1], "Game over.\n");
+                                    close(server);
+                                    return EXIT_SUCCESS;
+                                }
+                            }
+                            else
+                            {
+                                // Inform the player about the invalid move
+                                send_to_client(sd, "Invalid move. Try again.\n");
+                            }
+                        }
+                        else
+                        {
+                            // Inform the player about the invalid move
+                            send_to_client(sd, "Invalid move. Try again.\n");
+                        }
+                    }
+                    else
+                    {
+                        // Inform the player about the invalid input format
+                        send_to_client(sd, "Invalid input format. Enter your move in the format 'startRow startCol destRow destCol'.\n");
+                    }
                 }
                 else
                 {

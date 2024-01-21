@@ -57,9 +57,9 @@ int main(int argc, char *argv[])
         {
             buffer[n] = '\0';
             printf("%s", buffer);
-
+            
             // If the message contains the player's own socket descriptor, send a move
-            if (strstr(buffer, "It's your turn"))
+            if (strstr(buffer, "Enter"))
             {
                 char move[256];
                 printf("Enter your move: ");

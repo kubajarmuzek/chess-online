@@ -28,6 +28,33 @@ public:
         std::cout << "    a b c d e f g h" << std::endl;
     }
 
+    char getPieceAt(int row, int col) const
+    {
+        if (row >= 0 && row < 8 && col >= 0 && col < 8)
+        {
+            return board[row][col];
+        }
+        else
+        {
+            return ' '; // Placeholder for an empty position
+        }
+    }
+
+    std::string getBoardState()
+    {
+        std::string boardState;
+        for (int i = 7; i >= 0; --i)
+        {
+            for (int j = 0; j < 8; ++j)
+            {
+                boardState += board[i][j];
+                boardState += ' ';
+            }
+            boardState += '\n';
+        }
+        return boardState;
+    }
+
     void resetGame()
     {
         char initialBoard[8][8] = {
@@ -51,7 +78,7 @@ public:
     }
 
     // Function to make a move
-    void makeMove(int startRow, int startCol, int destRow, int destCol)
+    int makeMove(int startRow, int startCol, int destRow, int destCol)
     {
         // Check if the coordinates are within the valid range
         if (isValidCoordinate(startRow, startCol) && isValidCoordinate(destRow, destCol))
@@ -70,6 +97,7 @@ public:
                 else
                 {
                     std::cout << "Invalid move for a pawn." << std::endl;
+                    return 0;
                 }
                 break;
 
@@ -82,6 +110,7 @@ public:
                 else
                 {
                     std::cout << "Invalid move for a rook." << std::endl;
+                    return 0;
                 }
                 break;
 
@@ -94,6 +123,7 @@ public:
                 else
                 {
                     std::cout << "Invalid move for a bishop." << std::endl;
+                    return 0;
                 }
                 break;
 
@@ -106,6 +136,7 @@ public:
                 else
                 {
                     std::cout << "Invalid move for a knight." << std::endl;
+                    return 0;
                 }
                 break;
 
@@ -118,6 +149,7 @@ public:
                 else
                 {
                     std::cout << "Invalid move for a queen." << std::endl;
+                    return 0;
                 }
                 break;
 
@@ -130,11 +162,13 @@ public:
                 else
                 {
                     std::cout << "Invalid move for a king." << std::endl;
+                    return 0;
                 }
                 break;
 
             default:
                 std::cout << "Invalid piece." << std::endl;
+                return 0;
             }
         }
         else
@@ -161,7 +195,6 @@ public:
         // Check if indices are within the valid range
         return isValidCoordinate(startRow, startCol) && isValidCoordinate(destRow, destCol);
     }
-
 
     bool isGameOver()
     {
