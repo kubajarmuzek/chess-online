@@ -18,13 +18,17 @@
 
 int main(int argc, char **argv)
 {
-    if (argc < 2)
+    if (argc < 3)
     {
-        error("No port provided\n");
+        fprintf(stderr, "Usage: %s <server_ip> <server_port>\n", argv[0]);
+        exit(EXIT_FAILURE);
     }
 
     ChessGame chessGame;
-    int port = atoi(argv[1]);
+
+    int port = atoi(argv[2]);
+    const char *server_ip = argv[1];
+
     int valread, activity, sd, max_sd;
     struct sockaddr_storage serverStorage;
     socklen_t addr_size;
@@ -44,7 +48,7 @@ int main(int argc, char **argv)
     // error("Could not make socket non-blocking/n");
     //}
 
-    sockaddr_in addr{AF_INET, htons(port), {INADDR_ANY}};
+    sockaddr_in addr{AF_INET, htons(port), {inet_addr(server_ip)}};
 
     if (bind(server, (sockaddr *)&addr, sizeof(addr)) < 0)
     {

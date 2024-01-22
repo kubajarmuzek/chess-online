@@ -3,6 +3,7 @@
 #define TRUE   1  
 #define FALSE  0
 #define TIMEOUT_SEC 1
+#define BOARD_SIZE 8
 
 const int max_pending=32;
 
@@ -27,3 +28,4 @@ void send_to_client(int client_socket, const char *message) {
 }
 
 
+    

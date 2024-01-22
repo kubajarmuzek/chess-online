@@ -1,10 +1,12 @@
 #include <iostream>
 #include <cmath> // For abs function
 
+#include "utility.hh"
+
 class ChessGame
 {
 public:
-    char board[8][8];
+    char board[BOARD_SIZE][BOARD_SIZE];
 
     ChessGame()
     {
@@ -15,10 +17,10 @@ public:
     void printBoard()
     {
         std::cout << "  +-----------------+" << std::endl;
-        for (int i = 7; i >= 0; --i)
+        for (int i = BOARD_SIZE-1; i >= 0; --i)
         {
             std::cout << i + 1 << " | ";
-            for (int j = 0; j < 8; ++j)
+            for (int j = 0; j < BOARD_SIZE; ++j)
             {
                 std::cout << board[i][j] << ' ';
             }
@@ -30,7 +32,7 @@ public:
 
     char getPieceAt(int row, int col) const
     {
-        if (row >= 0 && row < 8 && col >= 0 && col < 8)
+        if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE)
         {
             return board[row][col];
         }
@@ -44,10 +46,10 @@ public:
     {
         std::string boardState;
         boardState += "  0 1 2 3 4 5 6 7\n"; // Column labels
-        for (int i = 7; i >= 0; --i)
+        for (int i = BOARD_SIZE-1; i >= 0; --i)
         {
             boardState += std::to_string(i) + " ";
-            for (int j = 0; j < 8; ++j)
+            for (int j = 0; j < BOARD_SIZE; ++j)
             {
                 boardState += board[i][j];
                 boardState += ' ';
@@ -65,9 +67,9 @@ public:
         bool player2KingAlive = false;
 
         // Check the status of kings
-        for (int row = 0; row < 8; ++row)
+        for (int row = 0; row < BOARD_SIZE; ++row)
         {
-            for (int col = 0; col < 8; ++col)
+            for (int col = 0; col < BOARD_SIZE; ++col)
             {
                 char piece = getPieceAt(row, col);
                 if (piece == 'k')
@@ -112,9 +114,9 @@ public:
             {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'}};
 
         // Copy values from initialBoard to the board array
-        for (int i = 0; i < 8; ++i)
+        for (int i = 0; i < BOARD_SIZE; ++i)
         {
-            for (int j = 0; j < 8; ++j)
+            for (int j = 0; j < BOARD_SIZE; ++j)
             {
                 board[i][j] = initialBoard[i][j];
             }
@@ -128,6 +130,14 @@ public:
         if (isValidCoordinate(startRow, startCol) && isValidCoordinate(destRow, destCol))
         {
             char piece = board[startRow][startCol];
+            char destPiece = board[destRow][destCol];
+
+            // Check if the destination square contains the player's own piece
+            if ((islower(piece) && islower(destPiece)) || (isupper(piece) && isupper(destPiece)))
+            {
+                std::cout << "Invalid move. Cannot capture your own piece." << std::endl;
+                return 0;
+            }
 
             // Check validity based on the type of piece
             switch (std::tolower(piece))
@@ -246,9 +256,9 @@ public:
         bool whiteKingPresent = false;
         bool blackKingPresent = false;
 
-        for (int i = 0; i < 8; ++i)
+        for (int i = 0; i < BOARD_SIZE; ++i)
         {
-            for (int j = 0; j < 8; ++j)
+            for (int j = 0; j < BOARD_SIZE; ++j)
             {
                 if (board[i][j] == 'K')
                 {
@@ -267,7 +277,7 @@ public:
 private:
     bool isValidCoordinate(int row, int col)
     {
-        return row >= 0 && row < 8 && col >= 0 && col < 8;
+        return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
     }
 
     bool isValidPawnMove(int startRow, int startCol, int destRow, int destCol)
@@ -317,23 +327,10 @@ private:
         return false;
     }
 
-    bool isValidRookMove(int startRow, int startCol, int destRow, int destCol)
-    {
-        // Implement rook movement rules
-        // For example, you might check if the rook is moving along a row or a column.
-        return startRow == destRow || startCol == destCol;
-    }
-
     // Function to check if the destination is empty or has an opponent's piece
     bool isDestinationEmptyOrOpponent(char piece, int destRow, int destCol)
     {
         return board[destRow][destCol] == ' ' || (islower(piece) && isupper(board[destRow][destCol])) || (isupper(piece) && islower(board[destRow][destCol]));
-    }
-
-    // Function to check if the move is valid for a bishop
-    bool isValidBishopMove(int startRow, int startCol, int destRow, int destCol)
-    {
-        return std::abs(destRow - startRow) == std::abs(destCol - startCol) && isDestinationEmptyOrOpponent(board[startRow][startCol], destRow, destCol);
     }
 
     // Function to check if the move is valid for a knight
@@ -344,10 +341,97 @@ private:
         return (rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2) && isDestinationEmptyOrOpponent(board[startRow][startCol], destRow, destCol);
     }
 
+    // Function to check if the move is valid for a rook
+    bool isValidRookMove(int startRow, int startCol, int destRow, int destCol)
+    {
+        // Ensure the destination coordinates are within the board limits
+        if (!isValidCoordinate(startRow, startCol) || !isValidCoordinate(destRow, destCol))
+        {
+            return false;
+        }
+
+        // Check if there are any pieces in the way
+        int rowDirection = (destRow - startRow) > 0 ? 1 : (destRow - startRow) < 0 ? -1
+                                                                                   : 0;
+        int colDirection = (destCol - startCol) > 0 ? 1 : (destCol - startCol) < 0 ? -1
+                                                                                   : 0;
+
+        int row = startRow + rowDirection;
+        int col = startCol + colDirection;
+
+        while (row != destRow || col != destCol)
+        {
+            if (board[row][col] != ' ')
+            {
+                return false; // There's a piece in the way
+            }
+            row += rowDirection;
+            col += colDirection;
+        }
+
+        return true;
+    }
+
+    // Function to check if the move is valid for a bishop
+    bool isValidBishopMove(int startRow, int startCol, int destRow, int destCol)
+    {
+        // Ensure the destination coordinates are within the board limits
+        if (!isValidCoordinate(startRow, startCol) || !isValidCoordinate(destRow, destCol))
+        {
+            return false;
+        }
+
+        // Check if there are any pieces in the way
+        int rowDirection = (destRow - startRow) > 0 ? 1 : (destRow - startRow) < 0 ? -1
+                                                                                   : 0;
+        int colDirection = (destCol - startCol) > 0 ? 1 : (destCol - startCol) < 0 ? -1
+                                                                                   : 0;
+
+        int row = startRow + rowDirection;
+        int col = startCol + colDirection;
+
+        while (row != destRow || col != destCol)
+        {
+            if (board[row][col] != ' ')
+            {
+                return false; // There's a piece in the way
+            }
+            row += rowDirection;
+            col += colDirection;
+        }
+
+        return true;
+    }
+
     // Function to check if the move is valid for a queen
     bool isValidQueenMove(int startRow, int startCol, int destRow, int destCol)
     {
-        return (startRow == destRow || startCol == destCol || std::abs(destRow - startRow) == std::abs(destCol - startCol)) && isDestinationEmptyOrOpponent(board[startRow][startCol], destRow, destCol);
+        // Ensure the destination coordinates are within the board limits
+        if (!isValidCoordinate(startRow, startCol) || !isValidCoordinate(destRow, destCol))
+        {
+            return false;
+        }
+
+        // Check if there are any pieces in the way
+        int rowDirection = (destRow - startRow) > 0 ? 1 : (destRow - startRow) < 0 ? -1
+                                                                                   : 0;
+        int colDirection = (destCol - startCol) > 0 ? 1 : (destCol - startCol) < 0 ? -1
+                                                                                   : 0;
+
+        int row = startRow + rowDirection;
+        int col = startCol + colDirection;
+
+        while (row != destRow || col != destCol)
+        {
+            if (board[row][col] != ' ')
+            {
+                return false; // There's a piece in the way
+            }
+            row += rowDirection;
+            col += colDirection;
+        }
+
+        return true;
     }
 
     // Function to check if the move is valid for a king
