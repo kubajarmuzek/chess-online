@@ -43,16 +43,60 @@ public:
     std::string getBoardState()
     {
         std::string boardState;
+        boardState += "  0 1 2 3 4 5 6 7\n"; // Column labels
         for (int i = 7; i >= 0; --i)
         {
+            boardState += std::to_string(i) + " ";
             for (int j = 0; j < 8; ++j)
             {
                 boardState += board[i][j];
                 boardState += ' ';
             }
-            boardState += '\n';
+            boardState += std::to_string(i) + "\n"; // Row labels
         }
+        boardState += "  0 1 2 3 4 5 6 7\n"; // Column labels
+
         return boardState;
+    }
+
+    int getWinner() const
+    {
+        bool player1KingAlive = false;
+        bool player2KingAlive = false;
+
+        // Check the status of kings
+        for (int row = 0; row < 8; ++row)
+        {
+            for (int col = 0; col < 8; ++col)
+            {
+                char piece = getPieceAt(row, col);
+                if (piece == 'k')
+                {
+                    // Player 1's king is still alive
+                    player1KingAlive = true;
+                }
+                else if (piece == 'K')
+                {
+                    // Player 2's king is still alive
+                    player2KingAlive = true;
+                }
+            }
+        }
+
+        // Check for a winner
+        if (!player1KingAlive && player2KingAlive)
+        {
+            // Player 2 wins
+            return 1;
+        }
+        else if (player1KingAlive && !player2KingAlive)
+        {
+            // Player 1 wins
+            return 0;
+        }
+
+        // No winner yet
+        return -1;
     }
 
     void resetGame()

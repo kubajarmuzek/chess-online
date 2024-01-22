@@ -134,8 +134,23 @@ int main(int argc, char **argv)
 
                                 if (chessGame.isGameOver())
                                 {
-                                    send_to_client(client_socket[0], "Game over.\n");
-                                    send_to_client(client_socket[1], "Game over.\n");
+                                    char winnerMessage[100];
+                                    int winner = chessGame.getWinner();
+                                    if (winner == 0)
+                                    {
+                                        sprintf(winnerMessage, "Player 1 (lowercase pieces) wins! Game over.\n");
+                                    }
+                                    else if (winner == 1)
+                                    {
+                                        sprintf(winnerMessage, "Player 2 (uppercase pieces) wins! Game over.\n");
+                                    }
+                                    else
+                                    {
+                                        sprintf(winnerMessage, "It's a draw! Game over.\n");
+                                    }
+
+                                    send_to_client(client_socket[0], winnerMessage);
+                                    send_to_client(client_socket[1], winnerMessage);
                                     close(server);
                                     return EXIT_SUCCESS;
                                 }
@@ -212,8 +227,8 @@ int main(int argc, char **argv)
                     if (connected_clients == max_clients)
                     {
                         // Both players connected, notify them
-                        send_to_client(client_socket[0], "Both players connected. Let the game begin!\n");
-                        send_to_client(client_socket[1], "Both players connected. Let the game begin!\n");
+                        send_to_client(client_socket[0], "Both players connected. Let the game begin!\nYour pieces:\nPawns (p), Rooks (r), Knights (n), Bishops (b), Queen (q), King (k)\n");
+                        send_to_client(client_socket[1], "Both players connected. Let the game begin!\nYour pieces:\nPawns (P), Rooks (R), Knights (N), Bishops (B), Queen (Q), King (K)\n");
                     }
 
                     break;
